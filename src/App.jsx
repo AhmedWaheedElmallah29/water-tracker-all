@@ -13,8 +13,6 @@ import Login from "./Login";
 import Signup from "./Signup";
 import "./App.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/water";
-
 const BOTTLE_SIZES = [
   { name: "Small Glass", size: 200, icon: "\ud83e\udd64" },
   { name: "Regular Glass", size: 250, icon: "\ud83e\udd64" },
@@ -47,9 +45,7 @@ function ProtectedApp({ onLogout }) {
 
   const fetchTodayData = async () => {
     try {
-      const response = await api.get(
-        `${API_BASE_URL}/today`.replace(/\/\//g, "/")
-      );
+      const response = await api.get("/today");
       setTodayData(response.data);
     } catch (error) {
       console.error("Error fetching today data:", error);
@@ -60,9 +56,7 @@ function ProtectedApp({ onLogout }) {
 
   const fetchHistory = async () => {
     try {
-      const response = await api.get(
-        `${API_BASE_URL}/history`.replace(/\/\//g, "/")
-      );
+      const response = await api.get("/history");
       setHistory(response.data);
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -71,10 +65,7 @@ function ProtectedApp({ onLogout }) {
 
   const addWater = async (amount) => {
     try {
-      const response = await api.post(
-        `${API_BASE_URL}/add`.replace(/\/\//g, "/"),
-        { amount }
-      );
+      const response = await api.post("/add", { amount });
       setTodayData(response.data);
       fetchHistory();
     } catch (error) {
@@ -85,12 +76,9 @@ function ProtectedApp({ onLogout }) {
   const updateGoal = async () => {
     if (!newGoal || newGoal <= 0) return;
     try {
-      const response = await api.put(
-        `${API_BASE_URL}/goal`.replace(/\/\//g, "/"),
-        {
-          goal: parseInt(newGoal),
-        }
-      );
+      const response = await api.put("/goal", {
+        goal: parseInt(newGoal),
+      });
       setTodayData(response.data);
       setShowGoalModal(false);
       setNewGoal("");
@@ -107,9 +95,7 @@ function ProtectedApp({ onLogout }) {
 
   const removeWater = async (entryId) => {
     try {
-      const response = await api.delete(
-        `${API_BASE_URL}/remove/${entryId}`.replace(/\/\//g, "/")
-      );
+      const response = await api.delete(`/remove/${entryId}`);
       setTodayData(response.data);
       fetchHistory();
     } catch (error) {
@@ -119,12 +105,9 @@ function ProtectedApp({ onLogout }) {
 
   const removeWaterAmount = async (amount) => {
     try {
-      const response = await api.delete(
-        `${API_BASE_URL}/remove-amount`.replace(/\/\//g, "/"),
-        {
-          data: { amount: parseInt(amount) },
-        }
-      );
+      const response = await api.delete("/remove-amount", {
+        data: { amount: parseInt(amount) },
+      });
       setTodayData(response.data);
       fetchHistory();
     } catch (error) {
@@ -153,9 +136,7 @@ function ProtectedApp({ onLogout }) {
 
   const resetDay = async () => {
     try {
-      const response = await api.post(
-        `${API_BASE_URL}/reset`.replace(/\/\//g, "/")
-      );
+      const response = await api.post("/reset");
       setTodayData(response.data.waterEntry);
       fetchHistory();
       setShowResetModal(false);
@@ -174,15 +155,9 @@ function ProtectedApp({ onLogout }) {
   const handleUpdateHistory = async () => {
     if (!editHistoryEntry) return;
     try {
-      await api.put(
-        `${API_BASE_URL}/update-by-id/${editHistoryEntry._id}`.replace(
-          /\/\//g,
-          "/"
-        ),
-        {
-          amount: parseInt(editHistoryAmount),
-        }
-      );
+      await api.put(`/update-by-id/${editHistoryEntry._id}`, {
+        amount: parseInt(editHistoryAmount),
+      });
       setEditHistoryEntry(null);
       setSuccessMessage("Entry updated!");
       fetchHistory();
