@@ -45,7 +45,7 @@ function ProtectedApp({ onLogout }) {
 
   const fetchTodayData = async () => {
     try {
-      const response = await api.get("/today");
+      const response = await api.get("/api/water/today");
       setTodayData(response.data);
     } catch (error) {
       console.error("Error fetching today data:", error);
@@ -56,7 +56,7 @@ function ProtectedApp({ onLogout }) {
 
   const fetchHistory = async () => {
     try {
-      const response = await api.get("/history");
+      const response = await api.get("/api/water/history");
       setHistory(response.data);
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -65,7 +65,7 @@ function ProtectedApp({ onLogout }) {
 
   const addWater = async (amount) => {
     try {
-      const response = await api.post("/add", { amount });
+      const response = await api.post("/api/water/add", { amount });
       setTodayData(response.data);
       fetchHistory();
     } catch (error) {
@@ -76,7 +76,7 @@ function ProtectedApp({ onLogout }) {
   const updateGoal = async () => {
     if (!newGoal || newGoal <= 0) return;
     try {
-      const response = await api.put("/goal", {
+      const response = await api.put("/api/water/goal", {
         goal: parseInt(newGoal),
       });
       setTodayData(response.data);
@@ -95,7 +95,7 @@ function ProtectedApp({ onLogout }) {
 
   const removeWater = async (entryId) => {
     try {
-      const response = await api.delete(`/remove/${entryId}`);
+      const response = await api.delete(`/api/water/remove/${entryId}`);
       setTodayData(response.data);
       fetchHistory();
     } catch (error) {
@@ -105,7 +105,7 @@ function ProtectedApp({ onLogout }) {
 
   const removeWaterAmount = async (amount) => {
     try {
-      const response = await api.delete("/remove-amount", {
+      const response = await api.delete("/api/water/remove-amount", {
         data: { amount: parseInt(amount) },
       });
       setTodayData(response.data);
@@ -136,7 +136,7 @@ function ProtectedApp({ onLogout }) {
 
   const resetDay = async () => {
     try {
-      const response = await api.post("/reset");
+      const response = await api.post("/api/water/reset");
       setTodayData(response.data.waterEntry);
       fetchHistory();
       setShowResetModal(false);
@@ -155,7 +155,7 @@ function ProtectedApp({ onLogout }) {
   const handleUpdateHistory = async () => {
     if (!editHistoryEntry) return;
     try {
-      await api.put(`/update-by-id/${editHistoryEntry._id}`, {
+      await api.put(`/api/water/update-by-id/${editHistoryEntry._id}`, {
         amount: parseInt(editHistoryAmount),
       });
       setEditHistoryEntry(null);
