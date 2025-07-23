@@ -235,6 +235,39 @@ router.put("/update-by-id/:id", async (req, res) => {
   }
 });
 
+// Reset today's water data
+router.post("/reset", async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let waterEntry = await WaterEntry.findOne({
+      userId: req.userId,
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (!waterEntry) {
+      // If no entry, nothing to reset
+      return res.json({ message: "Already reset.", reset: true });
+    }
+
+    waterEntry.amount = 0;
+    waterEntry.entries = [];
+    await waterEntry.save();
+    res.json({
+      message: "Water data reset for today.",
+      reset: true,
+      waterEntry,
+    });
+  } catch (error) {
+    console.error("Error resetting water data:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Get water history (last 7 days, حتى اليوم فقط)
 router.get("/history", async (req, res) => {
   try {
