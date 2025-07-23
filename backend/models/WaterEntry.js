@@ -26,6 +26,7 @@ const waterEntrySchema = new mongoose.Schema(
     },
     entries: [
       {
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true }, // Ensure each entry has an _id
         amount: {
           type: Number,
           required: true,
