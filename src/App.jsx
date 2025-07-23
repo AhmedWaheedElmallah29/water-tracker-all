@@ -12,6 +12,7 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import Login from "./Login";
 import Signup from "./Signup";
 import "./App.css";
+import Button from "./Button";
 
 const BOTTLE_SIZES = [
   { name: "Small Glass", size: 200, icon: "\ud83e\udd64" },
@@ -213,13 +214,8 @@ function ProtectedApp({ onLogout }) {
             >
               <FaRedo /> Reset Day
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={onLogout}
-              style={{ marginLeft: 8 }}
-            >
-              Logout
-            </button>
+            {/* Replace the old logout button with the new styled Button */}
+            <Button onLogout={onLogout} />
           </div>
         </motion.div>
       </header>
