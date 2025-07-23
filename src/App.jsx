@@ -427,19 +427,35 @@ function ProtectedApp({ onLogout }) {
                         <span className="entry-note">{entry.note}</span>
                       )}
                     </div>
-                    <button
-                      className={`remove-btn ${
-                        entry.amount < 0 ? "restore-btn" : ""
-                      }`}
-                      onClick={() => removeWater(entry._id)}
-                      title={
-                        entry.amount < 0
-                          ? "Restore this removed water"
-                          : "Remove this entry"
-                      }
-                    >
-                      {entry.amount < 0 ? "↺" : "×"}
-                    </button>
+                    {entry._id && (
+                      <button
+                        className={`remove-btn ${
+                          entry.amount < 0 ? "restore-btn" : ""
+                        }`}
+                        onClick={async () => {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to delete this entry?"
+                            )
+                          ) {
+                            try {
+                              await removeWater(entry._id);
+                            } catch (e) {
+                              alert(
+                                "Failed to delete entry. Please try again."
+                              );
+                            }
+                          }
+                        }}
+                        title={
+                          entry.amount < 0
+                            ? "Restore this removed water"
+                            : "Remove this entry"
+                        }
+                      >
+                        {entry.amount < 0 ? "↺" : "×"}
+                      </button>
+                    )}
                   </motion.div>
                 ))}
             </div>
