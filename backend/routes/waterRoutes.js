@@ -29,7 +29,7 @@ router.get("/today", async (req, res) => {
         userId: req.userId,
         date: today,
         amount: 0,
-        goal: 2000,
+        goal: 3,
         entries: [],
       });
       await waterEntry.save();
@@ -74,7 +74,7 @@ router.post(
           userId: req.userId,
           date: today,
           amount: 0,
-          goal: 2000,
+          goal: 3,
           entries: [],
         });
       }
