@@ -301,4 +301,105 @@ router.get("/all", async (req, res) => {
   }
 });
 
+// Delete a specific entry by its _id
+router.delete("/remove/:entryId", async (req, res) => {
+  try {
+    const { entryId } = req.params;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let waterEntry = await WaterEntry.findOne({
+      userId: req.userId,
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (!waterEntry) {
+      return res
+        .status(404)
+        .json({ message: "No water entry found for today" });
+    }
+
+    // Find the specific entry to remove
+    const entryIndex = waterEntry.entries.findIndex(
+      (entry) => entry._id.toString() === entryId
+    );
+
+    if (entryIndex === -1) {
+      return res.status(404).json({ message: "Entry not found" });
+    }
+
+    const removedAmount = waterEntry.entries[entryIndex].amount;
+    waterEntry.entries.splice(entryIndex, 1);
+
+    // Update total amount (handle both positive and negative amounts)
+    if (removedAmount > 0) {
+      waterEntry.amount -= removedAmount;
+    } else {
+      // If it's a negative entry (removed water), add it back
+      waterEntry.amount += Math.abs(removedAmount);
+    }
+
+    // Ensure amount doesn't go below 0
+    if (waterEntry.amount < 0) {
+      waterEntry.amount = 0;
+    }
+
+    await waterEntry.save();
+    res.json(waterEntry);
+  } catch (error) {
+    console.error("Error removing water entry:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Remove a specific amount of water from today's entry
+router.delete("/remove-amount", async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let waterEntry = await WaterEntry.findOne({
+      userId: req.userId,
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (!waterEntry) {
+      return res
+        .status(404)
+        .json({ message: "No water entry found for today" });
+    }
+
+    if (amount > waterEntry.amount) {
+      return res
+        .status(400)
+        .json({ message: "Cannot remove more water than consumed today" });
+    }
+
+    // Add a negative entry for removal
+    waterEntry.entries.push({
+      amount: -amount,
+      timestamp: new Date(),
+      note: "Removed water",
+    });
+
+    waterEntry.amount -= amount;
+    await waterEntry.save();
+    res.json(waterEntry);
+  } catch (error) {
+    console.error("Error removing water amount:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
