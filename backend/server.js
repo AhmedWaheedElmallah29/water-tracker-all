@@ -18,8 +18,8 @@ app.use(express.json({ limit: "10mb" }));
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // عشان يشتغل عندك Local
-      "https://YOUR-SITE-NAME.netlify.app", // 👈👈 مهم: حط هنا لينك موقعك اللي على Netlify
+      "http://localhost:5173",
+      "https://water-tracker-all.netlify.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
