@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { FaTint, FaPlus } from "react-icons/fa";
 import Navbar from "../../components/layout/Navbar";
 import api from "../../services/api";
+import toast from "react-hot-toast";
 import "../../App.css";
 
 const BOTTLE_SIZES = [
@@ -28,7 +29,6 @@ export default function Dashboard({ onLogout }) {
   const [showEditModal, setShowEditModal] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [editAmount, setEditAmount] = useState(0);
-  const [successMessage, setSuccessMessage] = useState("");
   const [editHistoryEntry, setEditHistoryEntry] = useState(null);
   const [editHistoryAmount, setEditHistoryAmount] = useState(0);
 
@@ -62,8 +62,10 @@ export default function Dashboard({ onLogout }) {
       const response = await api.post("/api/water/add", { amount });
       setTodayData(response.data);
       fetchHistory();
+      toast.success(`added ${amount}ml of water`);
     } catch (error) {
       console.error("Error adding water:", error);
+      toast.error("Failed to add water");
     }
   };
 
@@ -76,8 +78,10 @@ export default function Dashboard({ onLogout }) {
       setTodayData(response.data);
       setShowGoalModal(false);
       setNewGoal("");
+      toast.success("Daily goal updated!");
     } catch (error) {
       console.error("Error updating goal:", error);
+      toast.error("Failed to update goal");
     }
   };
 
@@ -92,8 +96,10 @@ export default function Dashboard({ onLogout }) {
       const response = await api.delete(`/api/water/remove/${entryId}`);
       setTodayData(response.data);
       fetchHistory();
+      toast.success("Entry removed");
     } catch (error) {
       console.error("Error removing water:", error);
+      toast.error("Failed to remove water entry");
     }
   };
 
@@ -104,8 +110,10 @@ export default function Dashboard({ onLogout }) {
       });
       setTodayData(response.data);
       fetchHistory();
+      toast.success(`Removed ${amount}ml`);
     } catch (error) {
       console.error("Error removing amount:", error);
+      toast.error("Failed to remove water amount");
     }
   };
 
@@ -134,8 +142,9 @@ export default function Dashboard({ onLogout }) {
       setTodayData(response.data.waterEntry);
       fetchHistory();
       setShowResetModal(false);
+      toast.success("Daily progress reset");
     } catch (error) {
-      alert("Failed to reset water data.");
+      toast.error("Failed to reset water data.");
       setShowResetModal(false);
     }
   };
@@ -153,11 +162,10 @@ export default function Dashboard({ onLogout }) {
         amount: parseInt(editHistoryAmount),
       });
       setEditHistoryEntry(null);
-      setSuccessMessage("Entry updated!");
+      toast.success("Entry updated!");
       fetchHistory();
-      setTimeout(() => setSuccessMessage(""), 2000);
     } catch (error) {
-      alert("Failed to update entry.");
+      toast.error("Failed to update entry.");
     }
   };
 
@@ -397,20 +405,29 @@ export default function Dashboard({ onLogout }) {
                         className={`remove-btn ${
                           entry.amount < 0 ? "restore-btn" : ""
                         }`}
-                        onClick={async () => {
-                          if (
-                            window.confirm(
-                              "Are you sure you want to delete this entry?"
-                            )
-                          ) {
-                            try {
-                              await removeWater(entry._id);
-                            } catch (e) {
-                              alert(
-                                "Failed to delete entry. Please try again."
-                              );
-                            }
-                          }
+                        onClick={() => {
+                          toast((t) => (
+                            <div className="confirm-toast">
+                              <span>Delete this entry?</span>
+                              <div className="confirm-buttons">
+                                <button
+                                  className="btn-confirm-yes"
+                                  onClick={async () => {
+                                    toast.dismiss(t.id);
+                                    await removeWater(entry._id);
+                                  }}
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  className="btn-confirm-no"
+                                  onClick={() => toast.dismiss(t.id)}
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          ), { duration: 4000 });
                         }}
                         title={
                           entry.amount < 0
@@ -598,9 +615,7 @@ export default function Dashboard({ onLogout }) {
       )}
 
       {/* Success Message Toast */}
-      {successMessage && (
-        <div className="toast success-toast">{successMessage}</div>
-      )}
+
     </div>
   );
 }

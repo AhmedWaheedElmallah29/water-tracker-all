@@ -1038,3 +1038,37 @@
     padding: 24px 8px 16px 8px;
   }
 }
+
+/* Toast Confirm */
+.confirm-toast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-confirm-yes {
+  background: var(--danger-red);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-confirm-no {
+  background: var(--light-blue);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}

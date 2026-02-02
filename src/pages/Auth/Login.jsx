@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaTint } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import api from "../../services/api";
 import "../../App.css";
 
@@ -20,12 +21,13 @@ export default function Login({ onLogin }) {
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("isAuthenticated", "true");
       setLoading(false);
+      toast.success("Logged in successfully!");
       onLogin();
     } catch (err) {
       setLoading(false);
-      setError(
-        err.response?.data?.message || "Login failed. Please try again."
-      );
+      const msg = err.response?.data?.message || "Login failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 

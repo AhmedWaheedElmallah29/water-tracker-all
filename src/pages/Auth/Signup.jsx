@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaTint } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import "../../App.css";
 import api from "../../services/api";
@@ -20,6 +21,7 @@ export default function Signup() {
     setSuccess("");
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     setLoading(true);
@@ -27,12 +29,15 @@ export default function Signup() {
       await api.post("/api/auth/signup", { username, password });
       setLoading(false);
       setSuccess("Signup successful! Redirecting to login...");
+      toast.success("Signup successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setLoading(false);
       // Show specific error from backend if available
       const backendError = err.response?.data?.error || err.response?.data?.message;
-      setError(backendError || "Signup failed. Please try again.");
+      const msg = backendError || "Signup failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
