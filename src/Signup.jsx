@@ -30,9 +30,9 @@ export default function Signup() {
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setLoading(false);
-      setError(
-        err.response?.data?.message || "Signup failed. Please try again."
-      );
+      // Show specific error from backend if available
+      const backendError = err.response?.data?.error || err.response?.data?.message;
+      setError(backendError || "Signup failed. Please try again.");
     }
   };
 
