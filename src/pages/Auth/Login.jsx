@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { FaTint } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import api from "./api";
-import "./App.css";
+import api from "../../services/api";
+import "../../App.css";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");

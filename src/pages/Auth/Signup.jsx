@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { FaTint } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 
-import "./App.css";
-import api from "./api";
+import "../../App.css";
+import api from "../../services/api";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
