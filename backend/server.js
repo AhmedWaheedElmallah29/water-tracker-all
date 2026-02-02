@@ -2,15 +2,30 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const serverless = require("serverless-http"); // 👈 إضافة مهمة
+const jwt = require("jsonwebtoken");
 
 // Load environment variables
-dotenv.config({ path: __dirname + "/config.env" });
+// التعديل: شلنا تحديد المسار عشان يشتغل محلي وعلى السيرفر
+dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+
+// إعدادات الـ CORS
+// ⚠️ ملاحظة: لما ترفع الفرونت إند، خد اللينك بتاعه وحطه مكان اللينك اللي تحت ده
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // للتجربة المحلية
+      "https://YOUR-FRONTEND-SITE.netlify.app", // 👈 حط لينك موقعك هنا
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 
 // Error handling middleware for JSON parsing
 app.use((error, req, res, next) => {
@@ -20,26 +35,29 @@ app.use((error, req, res, next) => {
   }
   next();
 });
-app.use(
-  cors({
-    origin: [
-      "https://water-front-2k86d9phd-ahmed-elmallahs-projects.vercel.app",
-      "https://water-front-nflhajo0w-ahmed-elmallahs-projects.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Import WaterEntry model
-const WaterEntry = require("./models/WaterEntry");
+// MongoDB Connection
+// التعديل: التأكد من الاتصال داخل الدالة عشان الـ Serverless
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) {
+    return;
+  }
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("✅ MongoDB connected successfully");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+  }
+};
+
+// لازم ننادي الاتصال في بداية الطلب
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// Import Models
 const User = require("./models/User");
-const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 // Auth: Sign Up
@@ -58,13 +76,12 @@ app.post("/api/auth/signup", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
     res.json({ token, username: user.username });
   } catch (err) {
     console.error("Signup error:", err);
     if (err.name === "ValidationError") {
-      // Collect all validation messages
       const messages = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({ message: messages.join(" ") });
     }
@@ -89,7 +106,7 @@ app.post("/api/auth/signin", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
     res.json({ token, username: user.username });
   } catch (err) {
@@ -97,18 +114,30 @@ app.post("/api/auth/signin", async (req, res) => {
   }
 });
 
-// Remove all /api/water routes from here. Only use the router:
+// Import Routes
 const waterRoutes = require("./routes/waterRoutes");
 app.use("/api/water", waterRoutes);
 
 // Basic route
 app.get("/", (req, res) => {
-  res.json({ message: "Water Tracker API is running!" });
+  res.json({ message: "Water Tracker API is running on Netlify!" });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 API available at http://localhost:${PORT}`);
-  console.log(`💾 Using MongoDB Atlas for data persistence`);
+app.get("/api", (req, res) => {
+  res.json({ message: "Water Tracker API is running on Netlify!" });
 });
+
+// ---------------------------------------------------------
+// التغيير الجذري عشان Netlify
+// ---------------------------------------------------------
+
+// لو احنا شغالين Local (على جهازك) استخدم app.listen
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running locally on port ${PORT}`);
+  });
+}
+
+// لو احنا على Netlify صدر الـ handler
+module.exports.handler = serverless(app);
