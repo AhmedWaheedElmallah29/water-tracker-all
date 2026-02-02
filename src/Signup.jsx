@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaTint } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+
 import "./App.css";
 import api from "./api";
 

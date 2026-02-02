@@ -10,7 +10,7 @@ export default defineConfig({
   // Optionally, add this to prevent Vite from trying to serve api/ as static files:
   server: {
     proxy: {
-      "/api": "https://water-tracker-all-backend.vercel.app/",
+      "/api": "http://localhost:5000",
     },
     fs: {
       allow: ["src", "public", "backend"], // do not include 'api'
