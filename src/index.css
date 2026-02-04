@@ -1,99 +1,71 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', 'sans-serif';
+
+  --color-primary-blue: #60a5fa;
+  --color-light-blue: #93c5fd;
+  --color-dark-blue: #3b82f6;
+  --color-ocean-blue: #1e40af;
+  --color-water-blue: #0ea5e9;
+  --color-sky-blue: #38bdf8;
+  --color-success-green: #10b981;
+  --color-warning-orange: #f59e0b;
+  --color-danger-red: #ef4444;
+  --color-danger-dark: #dc2626;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-shadow: rgba(0, 0, 0, 0.3);
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+
+  --animate-backgroundShift: backgroundShift 20s ease-in-out infinite;
+
+  @keyframes backgroundShift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(-10px, -10px) scale(1.1); }
+    50% { transform: translate(10px, -5px) scale(0.9); }
+    75% { transform: translate(-5px, 10px) scale(1.05); }
+  }
 }
 
-body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(
-    135deg,
-    #0f0f23 0%,
-    #1a1a2e 25%,
-    #16213e 50%,
-    #0f3460 75%,
-    #533483 100%
-  );
-  min-height: 100vh;
-  color: #ffffff;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Animated background particles */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(
-      circle at 20% 80%,
-      rgba(120, 119, 198, 0.3) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(255, 119, 198, 0.3) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 40% 40%,
-      rgba(120, 219, 255, 0.2) 0%,
-      transparent 50%
+@layer base {
+  body {
+    @apply font-sans min-h-screen relative overflow-x-hidden;
+    color: var(--color-text-primary);
+    background: linear-gradient(
+      135deg,
+      #0f0f23 0%,
+      #1a1a2e 25%,
+      #16213e 50%,
+      #0f3460 75%,
+      #533483 100%
     );
-  animation: backgroundShift 20s ease-in-out infinite;
-  z-index: -1;
-}
+  }
 
-@keyframes backgroundShift {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
+  /* Animated background particles */
+  body::before {
+    content: "";
+    @apply fixed top-0 left-0 w-full h-full -z-10 animate-backgroundShift;
+    background: radial-gradient(
+        circle at 20% 80%,
+        rgba(120, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(255, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 40%,
+        rgba(120, 219, 255, 0.2) 0%,
+        transparent 50%
+      );
   }
-  25% {
-    transform: translate(-10px, -10px) scale(1.1);
-  }
-  50% {
-    transform: translate(10px, -5px) scale(0.9);
-  }
-  75% {
-    transform: translate(-5px, 10px) scale(1.05);
-  }
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
-}
-
-/* Dark mode liquid glass color palette */
-:root {
-  --primary-blue: #60a5fa;
-  --light-blue: #93c5fd;
-  --dark-blue: #3b82f6;
-  --ocean-blue: #1e40af;
-  --water-blue: #0ea5e9;
-  --sky-blue: #38bdf8;
-  --white: #ffffff;
-  --light-gray: rgba(255, 255, 255, 0.1);
-  --gray: rgba(255, 255, 255, 0.6);
-  --dark-gray: rgba(255, 255, 255, 0.9);
-  --success-green: #10b981;
-  --warning-orange: #f59e0b;
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: rgba(0, 0, 0, 0.3);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --danger-red: #ef4444;
-  --danger-dark: #dc2626;
 }
 
 /* Custom scrollbar */
@@ -102,14 +74,13 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--light-gray);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-blue);
-  border-radius: 4px;
+  @apply bg-primary-blue rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--dark-blue);
+  @apply bg-dark-blue;
 }

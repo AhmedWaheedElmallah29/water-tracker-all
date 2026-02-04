@@ -3,7 +3,6 @@ import { FaTint } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import "../../App.css";
 import api from "../../services/api";
 
 export default function Signup() {
@@ -42,20 +41,20 @@ export default function Signup() {
   };
 
   return (
-    <div className="login-container">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <div className="login-logo">
-          <FaTint className="logo-icon" />
-          <h1>Water Tracker</h1>
+    <div className="min-h-screen flex items-center justify-center p-5 relative z-10">
+      <form 
+        className="bg-glass-bg backdrop-blur-[20px] p-10 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-glass-border w-full max-w-[400px] flex flex-col gap-4 relative overflow-hidden" 
+        onSubmit={handleSubmit}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-300/10 rounded-3xl -z-10" />
+
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <FaTint className="text-[2rem] text-primary-blue drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]" />
+          <h1 className="text-text-primary text-[1.8rem] font-bold m-0 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Water Tracker</h1>
         </div>
-        <h2>Sign Up</h2>
+        <h2 className="text-center text-text-primary text-2xl font-semibold">Sign Up</h2>
         <div
-          style={{
-            fontSize: "0.95rem",
-            color: "#888",
-            marginBottom: 8,
-            textAlign: "center",
-          }}
+          className="text-[0.95rem] text-text-muted mb-2 text-center"
         >
           Username must be at least 3 characters.
           <br />
@@ -67,26 +66,33 @@ export default function Signup() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoFocus
+          className="w-full p-4 bg-glass-bg border-2 border-glass-border rounded-xl text-base outline-none transition-all duration-300 text-text-primary backdrop-blur-[10px] placeholder:text-text-muted focus:border-primary-blue focus:shadow-[0_0_20px_rgba(96,165,250,0.3)]"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-4 bg-glass-bg border-2 border-glass-border rounded-xl text-base outline-none transition-all duration-300 text-text-primary backdrop-blur-[10px] placeholder:text-text-muted focus:border-primary-blue focus:shadow-[0_0_20px_rgba(96,165,250,0.3)]"
         />
         <input
           type="password"
           placeholder="Confirm Password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full p-4 bg-glass-bg border-2 border-glass-border rounded-xl text-base outline-none transition-all duration-300 text-text-primary backdrop-blur-[10px] placeholder:text-text-muted focus:border-primary-blue focus:shadow-[0_0_20px_rgba(96,165,250,0.3)]"
         />
-        {error && <div className="login-error">{error}</div>}
-        {success && <div className="login-success">{success}</div>}
-        <button className="btn btn-primary" type="submit" disabled={loading}>
+        {error && <div className="bg-danger-red/10 text-danger-red p-3 rounded-xl border border-danger-red/20 text-center text-sm">{error}</div>}
+        {success && <div className="bg-success-green/10 text-success-green p-3 rounded-xl border border-success-green/20 text-center text-sm">{success}</div>}
+        <button 
+          className="w-full px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex justify-center items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)] disabled:opacity-70 disabled:cursor-not-allowed" 
+          type="submit" 
+          disabled={loading}
+        >
           {loading ? "Signing up..." : "Sign Up"}
         </button>
-        <div className="login-signup-link">
-          Already have an account? <Link to="/login">Login</Link>
+        <div className="text-center text-text-secondary text-sm mt-4">
+          Already have an account? <Link to="/login" className="text-primary-blue font-semibold hover:underline">Login</Link>
         </div>
       </form>
     </div>

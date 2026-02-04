@@ -5,7 +5,7 @@ import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import NotFound from "./pages/NotFound";
-import "./App.css";
+
 
 function App() {
   const navigate = useNavigate();
