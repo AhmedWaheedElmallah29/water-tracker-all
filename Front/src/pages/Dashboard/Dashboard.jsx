@@ -462,7 +462,7 @@ export default function Dashboard() {
                             { duration: 5000 },
                           );
                         }}
-                        className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 text-sm hover:bg-red-500/40 transition-all"
+                        className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 text-sm hover:bg-red-500/40 transition-all"
                       >
                         ×
                       </button>
