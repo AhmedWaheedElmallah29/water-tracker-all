@@ -335,13 +335,13 @@ export default function Dashboard() {
                 value={removeAmount}
                 onChange={(e) => setRemoveAmount(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleRemoveAmount()}
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/25 outline-none focus:border-red-400/50 transition text-sm"
+                className="flex-1 min-w-0 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/25 outline-none focus:border-red-400/50 transition text-sm"
               />
               <motion.button
                 whileTap={{ scale: 0.93 }}
                 onClick={handleRemoveAmount}
                 disabled={!removeAmount || removeAmount <= 0}
-                className="px-5 py-3 bg-gradient-to-r from-red-500/70 to-red-600/70 disabled:opacity-30 text-white font-semibold rounded-xl text-sm"
+                className="shrink-0 px-5 py-3 bg-gradient-to-r from-red-500/70 to-red-600/70 disabled:opacity-30 text-white font-semibold rounded-xl text-sm"
               >
                 Remove
               </motion.button>
