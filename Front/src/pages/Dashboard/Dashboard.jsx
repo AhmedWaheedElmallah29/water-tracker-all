@@ -80,6 +80,7 @@ const pageVariants = {
 
 export default function Dashboard() {
   const api = useApi();
+  const [entryToDelete, setEntryToDelete] = useState(null);
   const [todayData, setTodayData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,10 +146,11 @@ export default function Dashboard() {
     try {
       const res = await api.delete(`/api/water/remove/${entryId}`);
       setTodayData(res.data);
-      fetchHistory();
+      await fetchHistory();
+      setEntryToDelete(null);
       toast.success("Entry removed");
     } catch {
-      toast.error("Failed to remove entry");
+      toast.error("Failed to remove");
     }
   };
 
@@ -435,34 +437,8 @@ export default function Dashboard() {
                     </div>
                     {entry._id && (
                       <button
-                        onClick={() => {
-                          toast(
-                            (t) => (
-                              <div className="flex flex-col gap-2 text-sm">
-                                <span>Delete this entry?</span>
-                                <div className="flex gap-2">
-                                  <button
-                                    className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs"
-                                    onClick={() => {
-                                      toast.dismiss(t.id);
-                                      removeEntry(entry._id);
-                                    }}
-                                  >
-                                    Yes
-                                  </button>
-                                  <button
-                                    className="px-3 py-1 bg-white/20 text-white rounded-lg text-xs"
-                                    onClick={() => toast.dismiss(t.id)}
-                                  >
-                                    No
-                                  </button>
-                                </div>
-                              </div>
-                            ),
-                            { duration: 5000 },
-                          );
-                        }}
-                        className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 text-sm hover:bg-red-500/40 transition-all"
+                        onClick={() => setEntryToDelete(entry._id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500/10 text-red-400"
                       >
                         ×
                       </button>
@@ -556,6 +532,32 @@ export default function Dashboard() {
                   className="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 rounded-xl text-white font-bold"
                 >
                   Yes, Reset
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        {entryToDelete && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-xs w-full text-center"
+            >
+              <p className="text-white font-bold mb-6">Delete this entry?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEntryToDelete(null)}
+                  className="flex-1 py-3 bg-white/5 rounded-xl text-white/60"
+                >
+                  No
+                </button>
+                <button
+                  onClick={() => removeEntry(entryToDelete)}
+                  className="flex-1 py-3 bg-red-500 rounded-xl text-white font-bold"
+                >
+                  Yes, Delete
                 </button>
               </div>
             </motion.div>
