@@ -35,13 +35,18 @@ export default function Dashboard({ onLogout }) {
   // offlineAddWater wraps all POST /api/water/add calls:
   //   • Online  → calls API directly and updates state via onSuccessfulAdd
   //   • Offline → queues entry in localStorage, syncs automatically on reconnect
-  const { offlineAddWater, pendingCount } = useOfflineWater(
-    (data) => {
-      setTodayData(data);
-      fetchHistory();
-    },
-    fetchHistory
-  );
+  const fetchHistory = async () => {
+    try {
+      const response = await api.get("/api/water/history");
+      setHistory(response.data);
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    }
+  };
+  const { offlineAddWater, pendingCount } = useOfflineWater((data) => {
+    setTodayData(data);
+    fetchHistory();
+  }, fetchHistory);
 
   useEffect(() => {
     fetchTodayData();
@@ -56,15 +61,6 @@ export default function Dashboard({ onLogout }) {
       console.error("Error fetching today data:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchHistory = async () => {
-    try {
-      const response = await api.get("/api/water/history");
-      setHistory(response.data);
-    } catch (error) {
-      console.error("Error fetching history:", error);
     }
   };
 
@@ -191,7 +187,7 @@ export default function Dashboard({ onLogout }) {
       {/* iOS Safari install guidance banner */}
       <IOSInstallBanner />
 
-      <Navbar 
+      <Navbar
         onLogout={onLogout}
         onShowHistory={() => setShowHistoryModal(true)}
         onShowGoal={() => setShowGoalModal(true)}
@@ -208,8 +204,9 @@ export default function Dashboard({ onLogout }) {
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-400/30 rounded-xl text-amber-300 text-sm font-medium backdrop-blur-[10px]">
             <FaWifi className="text-amber-400 opacity-50" />
             <span>
-              You're offline — <strong>{pendingCount}</strong> water log{pendingCount === 1 ? "" : "s"} saved locally.
-              They'll sync automatically when you reconnect.
+              You're offline — <strong>{pendingCount}</strong> water log
+              {pendingCount === 1 ? "" : "s"} saved locally. They'll sync
+              automatically when you reconnect.
             </span>
           </div>
         </motion.div>
@@ -225,7 +222,9 @@ export default function Dashboard({ onLogout }) {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-3xl -z-10" />
           <div className="flex flex-col items-center">
             <div className="text-center mb-[30px] flex flex-col items-center gap-2">
-              <h2 className="text-text-primary text-[1.8rem] font-bold m-0 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Today's Progress</h2>
+              <h2 className="text-text-primary text-[1.8rem] font-bold m-0 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                Today's Progress
+              </h2>
               <span className="text-text-secondary text-base">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
@@ -267,7 +266,9 @@ export default function Dashboard({ onLogout }) {
                     <span className="text-[2.5rem] font-bold text-text-primary drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                       {(todayData?.amount || 0) / 1000}
                     </span>
-                    <span className="text-[1.2rem] text-text-secondary font-medium">L</span>
+                    <span className="text-[1.2rem] text-text-secondary font-medium">
+                      L
+                    </span>
                   </div>
                   <div className="text-text-secondary text-[0.9rem] mt-1">
                     of {todayData?.goal || 3} L
@@ -291,17 +292,25 @@ export default function Dashboard({ onLogout }) {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-blue-500/5 rounded-3xl -z-10" />
             <div className="flex justify-around items-center gap-5">
               <div className="flex flex-col items-center gap-2">
-                <span className="text-[0.9rem] text-text-secondary font-medium">Current:</span>
+                <span className="text-[0.9rem] text-text-secondary font-medium">
+                  Current:
+                </span>
                 <span className="text-[1.3rem] font-bold text-text-primary drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
                   {(todayData.amount / 1000).toFixed(1)}L
                 </span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <span className="text-[0.9rem] text-text-secondary font-medium">Goal:</span>
-                <span className="text-[1.3rem] font-bold text-text-primary drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{todayData.goal}L</span>
+                <span className="text-[0.9rem] text-text-secondary font-medium">
+                  Goal:
+                </span>
+                <span className="text-[1.3rem] font-bold text-text-primary drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                  {todayData.goal}L
+                </span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <span className="text-[0.9rem] text-text-secondary font-medium">Remaining:</span>
+                <span className="text-[0.9rem] text-text-secondary font-medium">
+                  Remaining:
+                </span>
                 <span className="text-[1.3rem] font-bold text-primary-blue drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]">
                   {Math.max(0, todayData.goal * 1000 - todayData.amount)}ml
                 </span>
@@ -317,7 +326,9 @@ export default function Dashboard({ onLogout }) {
           className="bg-glass-bg backdrop-blur-[20px] rounded-3xl p-[30px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-glass-border relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-3xl -z-10" />
-          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Quick Add Water</h3>
+          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            Quick Add Water
+          </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4">
             {BOTTLE_SIZES.map((bottle) => (
               <motion.button
@@ -326,7 +337,9 @@ export default function Dashboard({ onLogout }) {
                 onClick={() => addWater(bottle.size)}
               >
                 <span className="text-[2rem]">{bottle.icon}</span>
-                <span className="text-[1.1rem] font-semibold">{bottle.size}ml</span>
+                <span className="text-[1.1rem] font-semibold">
+                  {bottle.size}ml
+                </span>
                 <span className="text-[0.9rem] opacity-90">{bottle.name}</span>
               </motion.button>
             ))}
@@ -340,7 +353,9 @@ export default function Dashboard({ onLogout }) {
           className="bg-glass-bg backdrop-blur-[20px] rounded-3xl p-[30px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-glass-border relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-blue-500/5 rounded-3xl -z-10" />
-          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Custom Amount</h3>
+          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            Custom Amount
+          </h3>
           <div className="flex gap-3 max-w-[400px] mx-auto">
             <input
               type="number"
@@ -350,8 +365,8 @@ export default function Dashboard({ onLogout }) {
               onKeyPress={(e) => e.key === "Enter" && handleCustomAmount()}
               className="flex-1 p-4 bg-glass-bg border-2 border-glass-border rounded-xl text-base outline-none transition-all duration-300 text-text-primary backdrop-blur-[10px] placeholder:text-text-muted focus:border-primary-blue focus:shadow-[0_0_20px_rgba(96,165,250,0.3)]"
             />
-            <button 
-              className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)]" 
+            <button
+              className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)]"
               onClick={handleCustomAmount}
             >
               <FaPlus /> Add
@@ -366,7 +381,9 @@ export default function Dashboard({ onLogout }) {
           className="bg-glass-bg backdrop-blur-[20px] rounded-3xl p-[30px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-glass-border relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-red-600/5 rounded-3xl -z-10" />
-          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Remove Water</h3>
+          <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            Remove Water
+          </h3>
           <div className="flex gap-3 max-w-[400px] mx-auto">
             <input
               type="number"
@@ -394,7 +411,9 @@ export default function Dashboard({ onLogout }) {
             className="bg-glass-bg backdrop-blur-[20px] rounded-3xl p-[30px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-glass-border relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-3xl -z-10" />
-            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Today's Entries</h3>
+            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-5 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              Today's Entries
+            </h3>
             <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {todayData.entries
                 .slice()
@@ -409,13 +428,17 @@ export default function Dashboard({ onLogout }) {
                   >
                     <FaTint
                       className={`text-[1.2rem] drop-shadow-[0_0_5px_rgba(96,165,250,0.5)] ${
-                        entry.amount < 0 ? "text-danger-red" : "text-primary-blue"
+                        entry.amount < 0
+                          ? "text-danger-red"
+                          : "text-primary-blue"
                       }`}
                     />
                     <div className="flex flex-col gap-1 flex-1">
                       <span
                         className={`font-semibold text-[1.1rem] ${
-                          entry.amount < 0 ? "text-danger-red line-through" : "text-text-primary"
+                          entry.amount < 0
+                            ? "text-danger-red line-through"
+                            : "text-text-primary"
                         }`}
                       >
                         {entry.amount > 0 ? "+" : ""}
@@ -428,37 +451,44 @@ export default function Dashboard({ onLogout }) {
                         })}
                       </span>
                       {entry.note && (
-                        <span className="text-text-muted text-[0.8rem] italic">{entry.note}</span>
+                        <span className="text-text-muted text-[0.8rem] italic">
+                          {entry.note}
+                        </span>
                       )}
                     </div>
                     {entry._id && (
                       <button
                         className={`w-6 h-6 rounded-full border-none flex items-center justify-center cursor-pointer text-[1.2rem] font-bold transition-all duration-300 ml-auto backdrop-blur-[10px] text-white hover:scale-110 hover:shadow-[0_0_15px_rgba(239,68,68,0.5)] ${
-                          entry.amount < 0 ? "bg-success-green hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]" : "bg-danger-red"
+                          entry.amount < 0
+                            ? "bg-success-green hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                            : "bg-danger-red"
                         }`}
                         onClick={() => {
-                          toast((t) => (
-                            <div className="flex flex-col gap-2">
-                              <span>Delete this entry?</span>
-                              <div className="flex gap-2 justify-center">
-                                <button
-                                  className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                                  onClick={async () => {
-                                    toast.dismiss(t.id);
-                                    await removeWater(entry._id);
-                                  }}
-                                >
-                                  Yes
-                                </button>
-                                <button
-                                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
-                                  onClick={() => toast.dismiss(t.id)}
-                                >
-                                  No
-                                </button>
+                          toast(
+                            (t) => (
+                              <div className="flex flex-col gap-2">
+                                <span>Delete this entry?</span>
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                                    onClick={async () => {
+                                      toast.dismiss(t.id);
+                                      await removeWater(entry._id);
+                                    }}
+                                  >
+                                    Yes
+                                  </button>
+                                  <button
+                                    className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                                    onClick={() => toast.dismiss(t.id)}
+                                  >
+                                    No
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ), { duration: 4000 });
+                            ),
+                            { duration: 4000 },
+                          );
                         }}
                         title={
                           entry.amount < 0
@@ -478,7 +508,10 @@ export default function Dashboard({ onLogout }) {
 
       {/* Goal Modal */}
       {showGoalModal && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] p-5 backdrop-blur-[10px]" onClick={() => setShowGoalModal(false)}>
+        <div
+          className="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] p-5 backdrop-blur-[10px]"
+          onClick={() => setShowGoalModal(false)}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -486,8 +519,12 @@ export default function Dashboard({ onLogout }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-[20px] -z-10" />
-            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Set Daily Goal</h3>
-            <p className="text-text-secondary mb-5 text-center">How much water do you want to drink today?</p>
+            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              Set Daily Goal
+            </h3>
+            <p className="text-text-secondary mb-5 text-center">
+              How much water do you want to drink today?
+            </p>
             <input
               type="number"
               placeholder="Enter goal in liters (e.g., 3)"
@@ -502,7 +539,10 @@ export default function Dashboard({ onLogout }) {
               >
                 Cancel
               </button>
-              <button className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)]" onClick={updateGoal}>
+              <button
+                className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)]"
+                onClick={updateGoal}
+              >
                 Update Goal
               </button>
             </div>
@@ -523,12 +563,17 @@ export default function Dashboard({ onLogout }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-[20px] -z-10" />
-            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Water History</h3>
+            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              Water History
+            </h3>
             <div className="flex-1 overflow-y-auto mb-5 custom-scrollbar pr-2">
               {history
                 .filter((entry) => new Date(entry.date) <= new Date())
                 .map((entry) => (
-                  <div key={entry._id} className="flex items-center gap-4 p-4 border-b border-glass-border bg-glass-bg rounded-lg mb-2 backdrop-blur-[10px]">
+                  <div
+                    key={entry._id}
+                    className="flex items-center gap-4 p-4 border-b border-glass-border bg-glass-bg rounded-lg mb-2 backdrop-blur-[10px]"
+                  >
                     <div className="font-semibold text-text-primary min-w-[80px]">
                       {new Date(entry.date).toLocaleDateString("en-US", {
                         weekday: "short",
@@ -543,7 +588,7 @@ export default function Dashboard({ onLogout }) {
                           style={{
                             width: `${Math.min(
                               (entry.amount / (entry.goal * 1000)) * 100,
-                              100
+                              100,
                             )}%`,
                             backgroundColor:
                               entry.amount >= entry.goal * 1000
@@ -590,8 +635,13 @@ export default function Dashboard({ onLogout }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-[20px] -z-10" />
-            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Edit Water Amount</h3>
-            <div style={{ marginBottom: 12 }} className="text-center text-text-secondary">
+            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              Edit Water Amount
+            </h3>
+            <div
+              style={{ marginBottom: 12 }}
+              className="text-center text-text-secondary"
+            >
               {new Date(editHistoryEntry.date).toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -613,7 +663,7 @@ export default function Dashboard({ onLogout }) {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-primary-blue to-light-blue text-white shadow-[0_4px_12px_rgba(96,165,250,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(96,165,250,0.4)]"
                 onClick={handleUpdateHistory}
               >
@@ -626,7 +676,10 @@ export default function Dashboard({ onLogout }) {
 
       {/* Reset Confirmation Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] p-5 backdrop-blur-[10px]" onClick={() => setShowResetModal(false)}>
+        <div
+          className="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] p-5 backdrop-blur-[10px]"
+          onClick={() => setShowResetModal(false)}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -634,7 +687,9 @@ export default function Dashboard({ onLogout }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-300/5 rounded-[20px] -z-10" />
-            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Reset All Water Data?</h3>
+            <h3 className="text-text-primary text-[1.5rem] font-semibold mb-3 text-center drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              Reset All Water Data?
+            </h3>
             <p className="text-text-secondary mb-5 text-center">
               This will delete all added and removed water for today and reset
               your progress to zero. Are you sure?
@@ -646,7 +701,7 @@ export default function Dashboard({ onLogout }) {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 bg-gradient-to-br from-danger-red to-danger-dark text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(239,68,68,0.4)]"
                 onClick={resetDay}
               >
