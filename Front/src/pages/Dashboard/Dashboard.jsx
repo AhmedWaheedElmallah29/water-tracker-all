@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaTint, FaPlus } from "react-icons/fa";
+import { FaTint, FaPlus, FaWifi } from "react-icons/fa";
 import Navbar from "../../components/layout/Navbar";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { useOfflineWater } from "../../hooks/useOfflineWater";
+import IOSInstallBanner from "../../components/ui/IOSInstallBanner";
 
 const BOTTLE_SIZES = [
   { name: "Small Glass", size: 200, icon: "🥤" },
@@ -28,6 +30,18 @@ export default function Dashboard({ onLogout }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editHistoryEntry, setEditHistoryEntry] = useState(null);
   const [editHistoryAmount, setEditHistoryAmount] = useState(0);
+
+  // ── Offline-First Water Hook ──────────────────────────────────────────────
+  // offlineAddWater wraps all POST /api/water/add calls:
+  //   • Online  → calls API directly and updates state via onSuccessfulAdd
+  //   • Offline → queues entry in localStorage, syncs automatically on reconnect
+  const { offlineAddWater, pendingCount } = useOfflineWater(
+    (data) => {
+      setTodayData(data);
+      fetchHistory();
+    },
+    fetchHistory
+  );
 
   useEffect(() => {
     fetchTodayData();
@@ -54,17 +68,9 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  const addWater = async (amount) => {
-    try {
-      const response = await api.post("/api/water/add", { amount });
-      setTodayData(response.data);
-      fetchHistory();
-      toast.success(`added ${amount}ml of water`);
-    } catch (error) {
-      console.error("Error adding water:", error);
-      toast.error("Failed to add water");
-    }
-  };
+  // addWater is now handled by the useOfflineWater hook (offlineAddWater).
+  // Kept as a thin alias for any remaining internal callers.
+  const addWater = (amount) => offlineAddWater(amount);
 
   const updateGoal = async () => {
     if (!newGoal || newGoal <= 0) return;
@@ -182,12 +188,32 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <div className="min-h-screen p-5 relative z-10">
+      {/* iOS Safari install guidance banner */}
+      <IOSInstallBanner />
+
       <Navbar 
         onLogout={onLogout}
         onShowHistory={() => setShowHistoryModal(true)}
         onShowGoal={() => setShowGoalModal(true)}
         onShowReset={() => setShowResetModal(true)}
       />
+
+      {/* Offline pending-sync badge — only visible when entries are queued */}
+      {pendingCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-[1200px] mx-auto mb-0"
+        >
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-400/30 rounded-xl text-amber-300 text-sm font-medium backdrop-blur-[10px]">
+            <FaWifi className="text-amber-400 opacity-50" />
+            <span>
+              You're offline — <strong>{pendingCount}</strong> water log{pendingCount === 1 ? "" : "s"} saved locally.
+              They'll sync automatically when you reconnect.
+            </span>
+          </div>
+        </motion.div>
+      )}
 
       <main className="max-w-[1200px] mx-auto flex flex-col gap-[30px]">
         {/* Today's Progress */}
