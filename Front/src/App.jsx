@@ -1,74 +1,64 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import React from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { AnimatePresence } from "framer-motion";
 import { Toaster } from "react-hot-toast";
-import Login from "./pages/Auth/Login";
-import Signup from "./pages/Auth/Signup";
+
+import AppShell from "./components/layout/AppShell";
+import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import HistoryPage from "./pages/History/HistoryPage";
+import SettingsPage from "./pages/Settings/SettingsPage";
 import NotFound from "./pages/NotFound";
 
+/** Wraps protected routes — redirects to Clerk sign-in if not authenticated */
+function ProtectedLayout() {
+  return (
+    <>
+      <SignedIn>
+        <AppShell />
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  );
+}
 
 function App() {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("isAuthenticated") === "true";
-  });
-
-  useEffect(() => {
-    const path = window.location.pathname;
-    // If not authenticated and not on public pages, redirect to login
-    if (!isAuthenticated && path !== "/login" && path !== "/signup") {
-      navigate("/login", { replace: true });
-    }
-    // If authenticated and on public pages, redirect to dashboard
-    if (isAuthenticated && (path === "/login" || path === "/signup")) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    setIsAuthenticated(false);
-    navigate("/login", { replace: true });
-  };
+  const location = useLocation();
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <Login
-              onLogin={() => {
-                localStorage.setItem("isAuthenticated", "true");
-                setIsAuthenticated(true);
-                navigate("/dashboard", { replace: true });
-              }}
-            />
-          }
-        />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/dashboard"
-          element={
-            isAuthenticated ? (
-              <Dashboard onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/"
-          element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
-          }
-        />
-        {/* 404 Route - Only reachable if authenticated (due to useEffect guard) or if logic changes */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            background: "rgba(15, 23, 42, 0.95)",
+            color: "#f8fafc",
+            border: "1px solid rgba(96, 165, 250, 0.2)",
+            borderRadius: "12px",
+            backdropFilter: "blur(20px)",
+          },
+        }}
+      />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Public — Landing Page */}
+          <Route path="/" element={<Landing />} />
+
+          {/* Protected — App Shell wraps all authenticated pages */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
     </>
   );
 }

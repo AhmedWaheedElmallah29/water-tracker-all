@@ -1,46 +1,78 @@
+import { NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaTint, FaHistory, FaCrosshairs, FaRedo } from "react-icons/fa";
-import Button from "../ui/Button";
+import { FaTint } from "react-icons/fa";
+import { UserButton, useUser } from "@clerk/clerk-react";
 
-const Navbar = ({ onLogout, onShowHistory, onShowGoal, onShowReset }) => {
+/**
+ * Navbar — Desktop top navigation.
+ * Hidden on mobile (< md). BottomNav handles mobile navigation.
+ */
+export default function Navbar() {
+  const { user } = useUser();
+  const navigate = useNavigate();
+
+  const navLinks = [
+    { to: "/dashboard", label: "Dashboard", icon: "💧" },
+    { to: "/history", label: "History", icon: "📊" },
+    { to: "/settings", label: "Settings", icon: "⚙️" },
+  ];
+
   return (
-    <header className="mb-8 relative z-10">
+    <header className="hidden md:block sticky top-0 z-50 px-6 py-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center max-w-[1200px] mx-auto py-5 px-8 bg-glass-bg backdrop-blur-[20px] rounded-3xl border border-glass-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden"
+        className="max-w-7xl mx-auto flex justify-between items-center px-6 py-3 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
       >
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-300/10 rounded-3xl -z-10 pointer-events-none" />
+        {/* Logo */}
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(96,165,250,0.4)]">
+            <FaTint className="text-white text-base" />
+          </div>
+          <span className="text-white font-bold text-xl tracking-tight">
+            HydroTrack
+          </span>
+        </button>
 
+        {/* Nav Links */}
+        <nav className="flex items-center gap-1">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-blue-500/20 text-blue-300 border border-blue-400/30"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`
+              }
+            >
+              <span>{link.icon}</span>
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* User area */}
         <div className="flex items-center gap-3">
-          <FaTint className="text-[2rem] text-primary-blue drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]" />
-          <h1 className="text-text-primary text-[1.8rem] font-bold m-0 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Water Tracker</h1>
-        </div>
-        <div className="flex gap-3">
-          <button
-            className="px-6 py-3 border border-glass-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 backdrop-blur-[10px] bg-glass-bg text-text-primary hover:bg-white/10 hover:-translate-y-px hover:shadow-[0_4px_15px_rgba(0,0,0,0.2)]"
-            onClick={onShowHistory}
-          >
-            <FaHistory /> History
-          </button>
-          <button
-            className="px-6 py-3 border border-glass-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 backdrop-blur-[10px] bg-glass-bg text-text-primary hover:bg-white/10 hover:-translate-y-px hover:shadow-[0_4px_15px_rgba(0,0,0,0.2)]"
-            onClick={onShowGoal}
-          >
-            <FaCrosshairs /> Goal
-          </button>
-          <button
-            className="px-6 py-3 border border-white/10 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 backdrop-blur-[10px] bg-gradient-to-br from-danger-red to-danger-dark text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(239,68,68,0.4)]"
-            onClick={onShowReset}
-          >
-            <FaRedo /> Reset Day
-          </button>
-          <Button onLogout={onLogout} />
+          {user && (
+            <span className="text-white/50 text-sm hidden lg:block">
+              {user.firstName || user.emailAddresses[0]?.emailAddress}
+            </span>
+          )}
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-9 h-9 ring-2 ring-blue-400/30 ring-offset-2 ring-offset-transparent",
+              },
+            }}
+          />
         </div>
       </motion.div>
     </header>
   );
-};
-
-export default Navbar;
+}

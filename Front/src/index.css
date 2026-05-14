@@ -38,11 +38,11 @@
     color: var(--color-text-primary);
     background: linear-gradient(
       135deg,
-      #0f0f23 0%,
-      #1a1a2e 25%,
-      #16213e 50%,
-      #0f3460 75%,
-      #533483 100%
+      #020617 0%,
+      #0f172a 25%,
+      #1e1b4b 55%,
+      #1e293b 80%,
+      #0f172a 100%
     );
   }
 
@@ -83,4 +83,18 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-dark-blue;
+}
+
+/* Hide scrollbar utility (keep scrollability) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS safe area bottom padding for Bottom Nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

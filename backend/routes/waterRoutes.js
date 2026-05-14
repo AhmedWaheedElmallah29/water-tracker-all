@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const WaterEntry = require("../models/WaterEntry");
 const { body, validationResult } = require("express-validator");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
 
 // Import authMiddleware from server.js
 const authMiddleware = require("../middleware/auth");
@@ -91,7 +89,7 @@ router.post(
       console.error("[ADD WATER] Error:", error);
       res.status(500).json({ message: "Server error", error: error.message });
     }
-  }
+  },
 );
 
 // Update daily goal
@@ -137,7 +135,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
-  }
+  },
 );
 
 // Update water entry for a specific date (e.g., yesterday)
@@ -182,7 +180,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
-  }
+  },
 );
 
 // Update water entry by _id (أكثر دقة)
@@ -213,7 +211,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
-  }
+  },
 );
 
 // Express route to update water entry by _id (على مستوى app)
@@ -226,7 +224,7 @@ router.put("/update-by-id/:id", async (req, res) => {
     const updated = await WaterEntry.findByIdAndUpdate(
       id,
       { amount },
-      { new: true }
+      { new: true },
     );
     if (!updated) return res.status(404).json({ message: "Entry not found" });
     res.json(updated);
@@ -324,7 +322,7 @@ router.delete("/remove/:entryId", async (req, res) => {
 
     // Find the specific entry to remove
     const entryIndex = waterEntry.entries.findIndex(
-      (entry) => entry._id.toString() === entryId
+      (entry) => entry._id.toString() === entryId,
     );
 
     if (entryIndex === -1) {
