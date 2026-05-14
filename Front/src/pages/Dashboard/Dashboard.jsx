@@ -318,12 +318,12 @@ export default function Dashboard() {
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleCustomAmount()}
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/25 outline-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20 transition text-sm"
+                className="min-w-0 flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/25 outline-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20 transition text-sm"
               />
               <motion.button
                 whileTap={{ scale: 0.93 }}
                 onClick={handleCustomAmount}
-                className="px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl shadow-[0_0_15px_rgba(96,165,250,0.3)] text-sm"
+                className="shrink-0 px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl shadow-[0_0_15px_rgba(96,165,250,0.3)] text-sm"
               >
                 + Add
               </motion.button>
