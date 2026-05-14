@@ -13,14 +13,10 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 
 // -----------------------------------------------------
-// 1. تظبيط الـ CORS (عشان Netlify يعرف يكلم Vercel)
 // -----------------------------------------------------
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://water-tracker-all.netlify.app",
-    ],
+    origin: ["http://localhost:5173", "https://water-tracker-all.netlify.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
