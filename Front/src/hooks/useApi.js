@@ -4,13 +4,6 @@ import { useMemo } from "react";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-/**
- * useApi — Returns an axios instance pre-configured with Clerk's JWT.
- *
- * Usage inside any React component or hook:
- *   const api = useApi();
- *   const res = await api.get("/api/water/today");
- */
 export function useApi() {
   const { getToken } = useAuth();
 

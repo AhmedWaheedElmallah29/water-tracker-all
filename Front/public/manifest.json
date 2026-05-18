@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "HydroTrack - Water Tracker",
+  "version": "1.0.0",
+  "description": "Track your daily water intake directly from your browser!",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "HydroTrack"
+  },
+  "permissions": ["storage", "notifications"]
+}

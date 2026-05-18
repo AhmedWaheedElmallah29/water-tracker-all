@@ -8,7 +8,7 @@ const waterEntrySchema = new mongoose.Schema(
     },
     goal: { type: Number, default: 3 },
     amount: { type: Number, default: 0 },
-    date: { type: String, required: true },
+    date: { type: Date, required: true },
     entries: [
       {
         amount: { type: Number, required: true },
