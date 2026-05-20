@@ -91,6 +91,9 @@ export default function Dashboard() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [newGoal, setNewGoal] = useState("");
 
+  // ─── التعديل: تتبع حالة الشبكة لحماية Clerk 🌐 ───
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   const fetchHistory = useCallback(async () => {
     try {
       const res = await api.get("/api/water/history");
@@ -100,30 +103,63 @@ export default function Dashboard() {
     }
   }, [api]);
 
+  const fetchToday = useCallback(async () => {
+    try {
+      const res = await api.get("/api/water/today");
+      setTodayData(res.data);
+      setIsError(false);
+    } catch (err) {
+      console.error("Error fetching today:", err);
+      setIsError(true);
+      toast.error("فقدنا الاتصال بالسيرفر 📡", { id: "server-error" });
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  // مراقبة الاتصال بالإنترنت بشكل حي
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setIsError(false);
+      setLoading(true);
+      fetchToday();
+      fetchHistory();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [fetchToday, fetchHistory]);
+
   const { offlineAddWater, pendingCount } = useOfflineWater((data) => {
     setTodayData(data);
     fetchHistory();
   }, fetchHistory);
 
   useEffect(() => {
-    const fetchToday = async () => {
-      try {
-        const res = await api.get("/api/water/today");
-        setTodayData(res.data);
-        setIsError(false);
-      } catch (err) {
-        console.error("Error fetching today:", err);
-        setIsError(true);
-        toast.error("فقدنا الاتصال بالسيرفر 📡", { id: "server-error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchToday();
-    fetchHistory();
-  }, []);
+    if (isOnline) {
+      fetchToday();
+      fetchHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [isOnline, fetchToday, fetchHistory]);
 
-  const addWater = (amount) => offlineAddWater(amount);
+  const addWater = (amount) => {
+    if (!isOnline) {
+      toast.error("You are offline. Cannot add logs right now.");
+      return;
+    }
+    offlineAddWater(amount);
+  };
 
   const handleCustomAmount = () => {
     if (!customAmount || customAmount <= 0) return;
@@ -207,21 +243,27 @@ export default function Dashboard() {
     );
   }
 
-  if (isError && !todayData) {
+  // التعديل: إظهار شاشة خطأ مخصصة عند انقطاع الإنترنت أو وقوع السيرفر
+  if (!isOnline || (isError && !todayData)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <div className="text-5xl mb-2">📡</div>
-        <h2 className="text-xl font-bold text-white">Connection Error</h2>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-4">
+        <div className="text-5xl mb-2 animate-bounce">📡</div>
+        <h2 className="text-xl font-bold text-white">
+          {!isOnline ? "You are Offline" : "Connection Error"}
+        </h2>
         <p className="text-white/50 text-sm max-w-xs">
-          We couldn't connect to the server. Please check your internet
-          connection or try again later.
+          {!isOnline
+            ? "HydroTrack needs an active internet connection to securely sync your hydration records."
+            : "We couldn't connect to the server. Please check your internet connection or try again later."}
         </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition-all"
-        >
-          🔄 Try Again
-        </button>
+        {isOnline && (
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition-all"
+          >
+            🔄 Try Again
+          </button>
+        )}
       </div>
     );
   }
@@ -234,24 +276,6 @@ export default function Dashboard() {
       exit="exit"
       className="max-w-7xl mx-auto px-4 py-6 md:px-8"
     >
-      {/* Offline banner */}
-      <AnimatePresence>
-        {pendingCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-2 px-4 py-3 mb-4 bg-amber-500/10 border border-amber-400/25 rounded-2xl text-amber-300 text-sm"
-          >
-            <FaWifi className="opacity-50" />
-            <span>
-              Offline — <strong>{pendingCount}</strong> log
-              {pendingCount !== 1 && "s"} will sync on reconnect.
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ── Date Header ─────────────────────────────────────────── */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -269,7 +293,6 @@ export default function Dashboard() {
       </div>
 
       {/* ── Main Grid ───────────────────────────────────────────── */}
-      {/* Mobile: single column | Desktop (md+): two-column split */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
         {/* ── LEFT COLUMN ─────────────────────────────────────── */}
         <div className="flex flex-col gap-5">
@@ -327,7 +350,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Custom Amount + Remove — below ring on mobile, left col on desktop */}
+          {/* Custom Amount + Remove */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -394,7 +417,7 @@ export default function Dashboard() {
 
         {/* ── RIGHT COLUMN ────────────────────────────────────── */}
         <div className="flex flex-col gap-5">
-          {/* Quick Add Buttons — thumb-friendly on mobile */}
+          {/* Quick Add Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
