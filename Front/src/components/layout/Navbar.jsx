@@ -67,7 +67,8 @@ export default function Navbar() {
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "w-9 h-9 ring-2 ring-blue-400/30 ring-offset-2 ring-offset-transparent",
+                avatarBox:
+                  "w-9 h-9 ring-2 ring-blue-400/30 ring-offset-2 ring-offset-transparent",
               },
             }}
           />
