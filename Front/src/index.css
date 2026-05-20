@@ -2,22 +2,27 @@
 
 /* ─── خدعة إصلاح ستايل الآيفون وسفاري 🍏 ─── */
 @supports (-webkit-backdrop-filter: none) {
-  /* السطور دي هتشتغل بس على الأجهزة اللي بتدعم سفاري وآيفون */
+  /* 1. إجبار خلفية الموقع الرئيسية على الثبات والقتامة على الآيفون */
+  body,
+  #root,
+  .min-h-screen {
+    background-color: #0f172a !important; /* نفس درجة الدارك مود الغامقة بتاعتك */
+    background-image: none !important; /* شلنا الـ Gradient المتعب لـ Safari */
+  }
 
+  /* 2. تظبيط الكروت والـ Blur */
   .backdrop-blur-xl {
-    /* بنجبر سفاري يشغل التغبيش الخاص بيه */
     -webkit-backdrop-filter: blur(24px) !important;
   }
 
-  /* بنخلي الكروت الشفافة تاخد أرضية أغمق سنة على الآيفون عشان النصوص تبان */
   .bg-white\/5,
   .bg-white\/10 {
     background-color: rgba(
-      15,
-      23,
-      42,
-      0.65
-    ) !important; /* قلبناها Slate داكن شفاف */
+      30,
+      41,
+      59,
+      0.7
+    ) !important; /* Slate داكن شفاف عشان ينطق */
   }
 }
 
