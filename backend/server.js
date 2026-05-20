@@ -13,7 +13,11 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://water-tracker-all.netlify.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "https://water-tracker-all.netlify.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),

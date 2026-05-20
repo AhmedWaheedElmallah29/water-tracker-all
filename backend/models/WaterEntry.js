@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const waterEntrySchema = new mongoose.Schema(
   {
     userId: {
-      type: String, // غيرناها لـ String عشان تناسب Clerk
+      type: String,
       required: true,
     },
     goal: { type: Number, default: 3 },

@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [todayData, setTodayData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
   const [removeAmount, setRemoveAmount] = useState("");
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -109,15 +110,18 @@ export default function Dashboard() {
       try {
         const res = await api.get("/api/water/today");
         setTodayData(res.data);
+        setIsError(false);
       } catch (err) {
         console.error("Error fetching today:", err);
+        setIsError(true);
+        toast.error("فقدنا الاتصال بالسيرفر 📡", { id: "server-error" });
       } finally {
         setLoading(false);
       }
     };
     fetchToday();
     fetchHistory();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const addWater = (amount) => offlineAddWater(amount);
 
@@ -199,6 +203,25 @@ export default function Dashboard() {
           💧
         </motion.div>
         <p className="text-white/50 text-sm">Loading your hydration data…</p>
+      </div>
+    );
+  }
+
+  if (isError && !todayData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+        <div className="text-5xl mb-2">📡</div>
+        <h2 className="text-xl font-bold text-white">Connection Error</h2>
+        <p className="text-white/50 text-sm max-w-xs">
+          We couldn't connect to the server. Please check your internet
+          connection or try again later.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition-all"
+        >
+          🔄 Try Again
+        </button>
       </div>
     );
   }
