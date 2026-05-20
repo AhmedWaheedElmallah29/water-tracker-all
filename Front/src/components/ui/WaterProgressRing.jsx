@@ -2,34 +2,39 @@ import { motion } from "framer-motion";
 
 /**
  * WaterProgressRing — Animated SVG liquid-fill progress ring.
- *
- * Shows a circular ring with an animated water wave inside that fills
- * up proportionally to the current hydration percentage.
- *
- * @param {number} percentage - 0 to 100
- * @param {number} amount     - current amount in ml
- * @param {number} goal       - daily goal in Liters
  */
-export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3 }) {
+export default function WaterProgressRing({
+  percentage = 0,
+  amount = 0,
+  goal = 3,
+}) {
   const SIZE = 220;
   const CX = SIZE / 2;
   const CY = SIZE / 2;
   const RADIUS = 90;
 
-  // Water level Y position inside the clipped circle
   const clampedPct = Math.min(Math.max(percentage, 0), 100);
+  // حساب مستوى الماية الرأسي
   const waterY = CY + RADIUS - (clampedPct / 100) * (RADIUS * 2);
 
-  // Color based on progress
+  // الألوان بناءً على الإنجاز
   const color =
-    clampedPct >= 100
-      ? "#10b981" // green — complete
-      : clampedPct >= 75
-      ? "#f59e0b" // amber — almost there
-      : "#60a5fa"; // blue — keep going
+    clampedPct >= 100 ? "#10b981" : clampedPct >= 75 ? "#f59e0b" : "#60a5fa";
 
   const glowColor =
-    clampedPct >= 100 ? "rgba(16,185,129,0.4)" : "rgba(96,165,250,0.4)";
+    clampedPct >= 100 ? "rgba(16,185,129,0.3)" : "rgba(96,165,250,0.3)";
+
+  // رسمة موجة ثابتة ومكررة أفقياً عشان تتحرك بسلاسة وبدون نهاية
+  const wavePath = `
+    M 0 10
+    Q 45 20, 90 10
+    T 180 10
+    T 270 10
+    T 360 10
+    V 240
+    H 0
+    Z
+  `;
 
   return (
     <div className="relative flex items-center justify-center">
@@ -37,14 +42,14 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
         width={SIZE}
         height={SIZE}
         viewBox={`0 0 ${SIZE} ${SIZE}`}
-        style={{ filter: `drop-shadow(0 0 20px ${glowColor})` }}
+        style={{ filter: `drop-shadow(0 0 16px ${glowColor})` }}
       >
         <defs>
-          {/* Circular clip mask for the liquid fill */}
+          {/* ماسك الدائرة لقشط الماية زيادة ونقصان */}
           <clipPath id="liquid-clip">
             <circle cx={CX} cy={CY} r={RADIUS - 4} />
           </clipPath>
-          {/* Glow filter */}
+          {/* تأثير توهج الحدود */}
           <filter id="glow">
             <feGaussianBlur stdDeviation="2" result="coloredBlur" />
             <feMerge>
@@ -59,63 +64,55 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
           cx={CX}
           cy={CY}
           r={RADIUS}
-          fill="rgba(255,255,255,0.03)"
-          stroke="rgba(255,255,255,0.1)"
+          fill="rgba(255,255,255,0.02)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={3}
         />
 
-        {/* ── Liquid fill (clipped to circle) ───────────────────── */}
+        {/* ── Liquid fill (Clipped & GPU Accelerated) ───────────── */}
         <g clipPath="url(#liquid-clip)">
-          {/* Static fill rectangle — fills from waterY downward */}
+          {/* مستطيل الخلفية الشفاف للماية */}
           <motion.rect
             x={CX - RADIUS}
             y={waterY}
             width={RADIUS * 2}
             height={RADIUS * 2 + 20}
-            fill={`${color}26`}
+            fill={`${color}15`}
             animate={{ y: waterY }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           />
 
-          {/* Wave 1 — primary animated wave */}
-          <motion.path
-            fill={`${color}55`}
-            animate={{
-              d: [
-                `M${CX - RADIUS},${waterY}
-                 Q${CX - RADIUS / 2},${waterY - 10} ${CX},${waterY}
-                 Q${CX + RADIUS / 2},${waterY + 10} ${CX + RADIUS},${waterY}
-                 L${CX + RADIUS},${CY + RADIUS + 10}
-                 L${CX - RADIUS},${CY + RADIUS + 10} Z`,
-                `M${CX - RADIUS},${waterY}
-                 Q${CX - RADIUS / 2},${waterY + 10} ${CX},${waterY}
-                 Q${CX + RADIUS / 2},${waterY - 10} ${CX + RADIUS},${waterY}
-                 L${CX + RADIUS},${CY + RADIUS + 10}
-                 L${CX - RADIUS},${CY + RADIUS + 10} Z`,
-              ],
-            }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          />
+          {/* تجميعة الأمواج في جروب يتحرك رأسياً مع النسبة */}
+          <motion.g
+            animate={{ y: waterY - 10 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            {/* الموجة الأولى: تتحرك أفقياً بالكامل على الـ GPU */}
+            <motion.path
+              d={wavePath}
+              fill={`${color}44`}
+              style={{ willChange: "transform" }}
+              animate={{ x: [-180, 0] }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
 
-          {/* Wave 2 — offset wave for layered depth */}
-          <motion.path
-            fill={`${color}33`}
-            animate={{
-              d: [
-                `M${CX - RADIUS},${waterY + 5}
-                 Q${CX - RADIUS / 2},${waterY - 5} ${CX},${waterY + 5}
-                 Q${CX + RADIUS / 2},${waterY + 15} ${CX + RADIUS},${waterY + 5}
-                 L${CX + RADIUS},${CY + RADIUS + 10}
-                 L${CX - RADIUS},${CY + RADIUS + 10} Z`,
-                `M${CX - RADIUS},${waterY + 5}
-                 Q${CX - RADIUS / 2},${waterY + 15} ${CX},${waterY + 5}
-                 Q${CX + RADIUS / 2},${waterY - 5} ${CX + RADIUS},${waterY + 5}
-                 L${CX + RADIUS},${CY + RADIUS + 10}
-                 L${CX - RADIUS},${CY + RADIUS + 10} Z`,
-              ],
-            }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-          />
+            {/* الموجة الثانية: عكس الاتجاه وبارتفاع مختلف لعمق سينمائي */}
+            <motion.path
+              d={wavePath}
+              fill={`${color}22`}
+              style={{ willChange: "transform" }}
+              animate={{ x: [0, -180] }}
+              transition={{
+                duration: 5.5,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          </motion.g>
         </g>
 
         {/* ── Progress arc border ────────────────────────────────── */}
@@ -129,7 +126,9 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
           strokeDasharray={`${2 * Math.PI * RADIUS}`}
           strokeDashoffset={`${2 * Math.PI * RADIUS * (1 - clampedPct / 100)}`}
           transform={`rotate(-90 ${CX} ${CY})`}
-          style={{ transition: "stroke-dashoffset 0.8s ease, stroke 0.5s ease" }}
+          style={{
+            transition: "stroke-dashoffset 0.6s ease, stroke 0.4s ease",
+          }}
           strokeLinecap="round"
           filter="url(#glow)"
         />
@@ -137,21 +136,21 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
         {/* ── Center text ────────────────────────────────────────── */}
         <text
           x={CX}
-          y={CY - 16}
+          y={CY - 14}
           textAnchor="middle"
           fill="white"
           fontSize="36"
           fontWeight="bold"
           fontFamily="Inter, sans-serif"
-          style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.3))" }}
+          style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.25))" }}
         >
           {(amount / 1000).toFixed(1)}
         </text>
         <text
           x={CX}
-          y={CY + 8}
+          y={CY + 10}
           textAnchor="middle"
-          fill="rgba(255,255,255,0.6)"
+          fill="rgba(255,255,255,0.4)"
           fontSize="14"
           fontFamily="Inter, sans-serif"
         >
@@ -159,7 +158,7 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
         </text>
         <text
           x={CX}
-          y={CY + 32}
+          y={CY + 34}
           textAnchor="middle"
           fill={color}
           fontSize="16"
@@ -174,7 +173,7 @@ export default function WaterProgressRing({ percentage = 0, amount = 0, goal = 3
       {clampedPct >= 100 && (
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+          animate={{ scale: [0, 1.2, 1], opacity: 1 }}
           className="absolute -top-2 -right-2 text-2xl"
         >
           🎉

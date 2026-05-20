@@ -91,7 +91,7 @@ export default function Dashboard() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [newGoal, setNewGoal] = useState("");
 
-  // ─── التعديل: تتبع حالة الشبكة لحماية Clerk 🌐 ───
+  // تتبع حالة الشبكة لحماية Clerk ومنع الكراش
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const fetchHistory = useCallback(async () => {
@@ -139,7 +139,7 @@ export default function Dashboard() {
     };
   }, [fetchToday, fetchHistory]);
 
-  const { offlineAddWater, pendingCount } = useOfflineWater((data) => {
+  const { offlineAddWater } = useOfflineWater((data) => {
     setTodayData(data);
     fetchHistory();
   }, fetchHistory);
@@ -243,7 +243,6 @@ export default function Dashboard() {
     );
   }
 
-  // التعديل: إظهار شاشة خطأ مخصصة عند انقطاع الإنترنت أو وقوع السيرفر
   if (!isOnline || (isError && !todayData)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-4">
@@ -296,12 +295,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
         {/* ── LEFT COLUMN ─────────────────────────────────────── */}
         <div className="flex flex-col gap-5">
-          {/* Progress Ring Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden"
-          >
+          {/* Progress Ring Card - تم إرجاعه div عادي لثبات الـ Blur ومنع الـ Lag */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 rounded-3xl" />
             <h2 className="text-white font-semibold text-lg mb-5 text-center">
               Today&apos;s Progress
@@ -348,7 +343,7 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Custom Amount + Remove */}
           <motion.div
