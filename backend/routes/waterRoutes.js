@@ -109,6 +109,47 @@ router.put(
   },
 );
 
+// ─── Route تعديل كمية سجل معين بالـ ID ──────────────────
+router.put("/update-by-id/:id", async (req, res) => {
+  try {
+    const entryId = req.params.id;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Amount must be a positive number" });
+    }
+
+    const updatedDay = await WaterEntry.findOneAndUpdate(
+      {
+        userId: req.userId,
+        "entries._id": entryId,
+      },
+      {
+        $set: { "entries.$.amount": parseInt(amount) },
+      },
+      { new: true },
+    );
+
+    if (!updatedDay) {
+      return res.status(404).json({ message: "Water entry not found" });
+    }
+
+    const totalAmount = updatedDay.entries.reduce(
+      (sum, entry) => sum + entry.amount,
+      0,
+    );
+    updatedDay.amount = totalAmount;
+    await updatedDay.save();
+
+    res.json(updatedDay);
+  } catch (error) {
+    console.error("Error updating specific water entry:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // -----------------------------------------------------------
 // 3. مسح سجل فرعي (DELETE Remove Entry) - حل مشكلة الـ Remove القديمة
 // -----------------------------------------------------------
