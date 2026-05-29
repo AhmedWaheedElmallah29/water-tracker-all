@@ -112,40 +112,34 @@ router.put(
 // ─── Route تعديل كمية سجل معين بالـ ID ──────────────────
 router.put("/update-by-id/:id", async (req, res) => {
   try {
-    const entryId = req.params.id;
+    const dayId = req.params.id; // الـ ID بتاع اليوم اللي جاي من الفرونت
     const { amount } = req.body;
 
-    if (!amount || amount <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Amount must be a positive number" });
+    // التأكد من صحة الرقم
+    if (amount === undefined || amount < 0) {
+      return res.status(400).json({ message: "Invalid amount" });
     }
 
+    // البحث عن اليوم بالـ ID وتحديث الإجمالي بتاعه
     const updatedDay = await WaterEntry.findOneAndUpdate(
       {
-        userId: req.userId,
-        "entries._id": entryId,
+        _id: dayId,
+        userId: req.userId, // الأمان: عشان اليوزر ميعدلش داتا يوزر تاني
       },
       {
-        $set: { "entries.$.amount": parseInt(amount) },
+        $set: { amount: parseInt(amount) },
       },
       { new: true },
     );
 
+    // لو اليوم مش موجود
     if (!updatedDay) {
-      return res.status(404).json({ message: "Water entry not found" });
+      return res.status(404).json({ message: "History entry not found" });
     }
-
-    const totalAmount = updatedDay.entries.reduce(
-      (sum, entry) => sum + entry.amount,
-      0,
-    );
-    updatedDay.amount = totalAmount;
-    await updatedDay.save();
 
     res.json(updatedDay);
   } catch (error) {
-    console.error("Error updating specific water entry:", error);
+    console.error("Error updating history entry:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
