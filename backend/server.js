@@ -17,6 +17,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:4173",
       "https://water-tracker-all.netlify.app",
+      "https://water-tracker-all.vercel.app/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,

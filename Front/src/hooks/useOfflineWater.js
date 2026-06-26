@@ -62,7 +62,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
     if (pending.length === 0) return;
 
     const syncToast = toast.loading(
-      `Syncing ${pending.length} offline entr${pending.length === 1 ? "y" : "ies"}…`
+      `Syncing ${pending.length} offline entr${pending.length === 1 ? "y" : "ies"}…`,
     );
 
     const token = await getToken();
@@ -76,7 +76,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
         const response = await axios.post(
           `${BASE_URL}/api/water/add`,
           { amount: entry.amount },
-          { headers }
+          { headers },
         );
         lastSuccessData = response.data;
       } catch (err) {
@@ -89,7 +89,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
       savePending([]);
       toast.success(
         `Synced ${pending.length} offline entr${pending.length === 1 ? "y" : "ies"}! 💧`,
-        { id: syncToast }
+        { id: syncToast },
       );
       if (lastSuccessData && onSuccessfulAdd) onSuccessfulAdd(lastSuccessData);
       if (onSyncComplete) onSyncComplete();
@@ -98,7 +98,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
       const synced = pending.length - failed.length;
       toast.error(
         `Synced ${synced}/${pending.length} entries. ${failed.length} failed — will retry later.`,
-        { id: syncToast }
+        { id: syncToast },
       );
       if (lastSuccessData && onSuccessfulAdd) onSuccessfulAdd(lastSuccessData);
     }
@@ -123,17 +123,19 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
     async (amount) => {
       if (!navigator.onLine) {
         const entry = queueEntry(amount);
-        toast(`Saved ${amount}ml offline 📶\nWill sync when you're back online.`, {
-          icon: "💾",
-          duration: 4000,
-          style: {
-            background: "rgba(15, 23, 42, 0.95)",
-            color: "#f8fafc",
-            border: "1px solid rgba(96, 165, 250, 0.3)",
-            borderRadius: "12px",
+        toast(
+          `Saved ${amount}ml offline 📶\nWill sync when you're back online.`,
+          {
+            icon: "💾",
+            duration: 4000,
+            style: {
+              background: "rgba(15, 23, 42, 0.95)",
+              color: "#f8fafc",
+              border: "1px solid rgba(96, 165, 250, 0.3)",
+              borderRadius: "12px",
+            },
           },
-        });
-        console.log("[useOfflineWater] Queued offline entry:", entry);
+        );
         return null;
       }
 
@@ -142,7 +144,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
         const response = await axios.post(
           `${BASE_URL}/api/water/add`,
           { amount },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         if (onSuccessfulAdd) onSuccessfulAdd(response.data);
         toast.success(`Added ${amount}ml of water 💧`);
@@ -153,7 +155,7 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
         throw error;
       }
     },
-    [getToken, onSuccessfulAdd]
+    [getToken, onSuccessfulAdd],
   );
 
   return { offlineAddWater, pendingCount };

@@ -21,7 +21,6 @@ export default function HistoryPage() {
     const fetchAll = async () => {
       try {
         const res = await api.get("/api/water/history");
-        console.log(res);
         setHistory(res.data);
       } catch (err) {
         console.error("Error fetching history:", err);

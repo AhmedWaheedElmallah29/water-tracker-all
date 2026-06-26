@@ -24,7 +24,6 @@ async function migrate() {
     }
   }
 
-  console.log(`Updated ${updated} documents.`);
   await mongoose.disconnect();
 }
 
