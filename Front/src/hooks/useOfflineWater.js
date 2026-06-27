@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -6,18 +6,11 @@ import toast from "react-hot-toast";
 const PENDING_KEY = "pendingWaterLogs";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-/**
- * useOfflineWater — Offline-first water logging with Clerk auth.
- *
- * ONLINE  → Calls the real API immediately with Clerk JWT.
- * OFFLINE → Saves entry to localStorage, syncs automatically on reconnect.
- *
- * @param {Function} onSuccessfulAdd - Callback after a successful add (receives response data).
- * @param {Function} onSyncComplete  - Callback after all pending entries synced.
- * @returns {{ offlineAddWater: Function, pendingCount: number }}
- */
 export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
   const { getToken } = useAuth();
+
+  // 1. هنا السر: عملنا قفل عشان نمنع التكرار
+  const syncLock = useRef(false);
 
   const [pendingCount, setPendingCount] = useState(() => {
     try {
@@ -27,8 +20,6 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
       return 0;
     }
   });
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
 
   const readPending = () => {
     try {
@@ -55,11 +46,15 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
     return newEntry;
   };
 
-  // ── Sync Logic ────────────────────────────────────────────────────────────
-
   const syncPendingEntries = useCallback(async () => {
+    // 2. لو الباب مقفول (في مزامنة بتحصل حالياً)، اخرج فوراً ومتكررش الطلب
+    if (syncLock.current) return;
+
     const pending = readPending();
     if (pending.length === 0) return;
+
+    // 3. اقفل الباب عشان محدش يزامن معاك
+    syncLock.current = true;
 
     const syncToast = toast.loading(
       `Syncing ${pending.length} offline entr${pending.length === 1 ? "y" : "ies"}…`,
@@ -97,14 +92,15 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
       savePending(failed);
       const synced = pending.length - failed.length;
       toast.error(
-        `Synced ${synced}/${pending.length} entries. ${failed.length} failed — will retry later.`,
+        `Synced ${synced}/${pending.length} entries. ${failed.length} failed.`,
         { id: syncToast },
       );
       if (lastSuccessData && onSuccessfulAdd) onSuccessfulAdd(lastSuccessData);
     }
-  }, [getToken, onSuccessfulAdd, onSyncComplete]);
 
-  // ── Online Listener ───────────────────────────────────────────────────────
+    // 4. افتح الباب تاني بعد ما المزامنة خلصت تماماً والـ Pending اتمسح
+    syncLock.current = false;
+  }, [getToken, onSuccessfulAdd, onSyncComplete]);
 
   useEffect(() => {
     const handleOnline = () => syncPendingEntries();
@@ -117,12 +113,10 @@ export function useOfflineWater(onSuccessfulAdd, onSyncComplete) {
     return () => window.removeEventListener("online", handleOnline);
   }, [syncPendingEntries]);
 
-  // ── Main: offlineAddWater ─────────────────────────────────────────────────
-
   const offlineAddWater = useCallback(
     async (amount) => {
       if (!navigator.onLine) {
-        const entry = queueEntry(amount);
+        queueEntry(amount);
         toast(
           `Saved ${amount}ml offline 📶\nWill sync when you're back online.`,
           {

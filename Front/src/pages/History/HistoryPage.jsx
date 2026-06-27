@@ -17,22 +17,53 @@ export default function HistoryPage() {
   const [editEntry, setEditEntry] = useState(null);
   const [editAmount, setEditAmount] = useState(0);
 
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   useEffect(() => {
+    // 1. مراقبة حالة الاتصال
+    const handleOnline = () => {
+      setIsOnline(true);
+      fetchAll(); // نعمل ريفريش للداتا أول ما النت يرجع
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
     const fetchAll = async () => {
       try {
         const res = await api.get("/api/water/history");
         setHistory(res.data);
+        // تحديث الكاش بالداتا الجديدة
+        localStorage.setItem("cachedHistory", JSON.stringify(res.data));
       } catch (err) {
         console.error("Error fetching history:", err);
-        toast.error("Failed to load history");
+        // 2. لو مفيش نت، نجيب الداتا المتكيشة بدل الإيرور
+        const cached = localStorage.getItem("cachedHistory");
+        if (cached) {
+          setHistory(JSON.parse(cached));
+        } else if (!navigator.onLine) {
+          // لو مفيش كاش ومفيش نت من الأساس
+          toast.error("You are offline. Cannot load history.");
+        }
       } finally {
         setLoading(false);
       }
     };
+
     fetchAll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [api]);
 
   const handleEdit = (entry) => {
+    if (!isOnline) {
+      toast.error("Editing requires an internet connection 📡");
+      return;
+    }
     setEditEntry(entry);
     setEditAmount(entry.amount);
   };
@@ -50,6 +81,8 @@ export default function HistoryPage() {
       );
       setEditEntry(null);
       toast.success("Entry updated! ✅");
+      // تحديث الكاش بعد التعديل الناجح
+      localStorage.setItem("cachedHistory", JSON.stringify(history));
     } catch {
       toast.error("Failed to update entry");
     }
@@ -71,6 +104,19 @@ export default function HistoryPage() {
     null,
   );
 
+  // 3. الشاشة التحذيرية الكاملة لو أول مرة يفتح ومفيش كاش نهائي
+  if (!isOnline && history.length === 0 && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-4">
+        <div className="text-5xl mb-2 animate-bounce">📡</div>
+        <h2 className="text-xl font-bold text-white">You are Offline</h2>
+        <p className="text-white/50 text-sm max-w-xs">
+          Connect to the internet to load your history records.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       variants={pageVariants}
@@ -79,6 +125,23 @@ export default function HistoryPage() {
       exit="exit"
       className="max-w-3xl mx-auto px-4 py-6 md:px-8"
     >
+      {/* 4. شريط الأوفلاين التحذيري */}
+      {!isOnline && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-500/20 border border-amber-500/30 text-amber-100 px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 shadow-lg"
+        >
+          <span className="text-2xl">⚡</span>
+          <div className="flex-1">
+            <p className="font-bold text-sm">Offline Mode</p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Viewing cached history. Editing is disabled until you reconnect.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
           Water History 📊
@@ -223,15 +286,20 @@ export default function HistoryPage() {
                         >
                           {Math.round(pct)}%
                         </span>
+                        {/* 5. زرار التعديل بيتغير شكله لو مفيش نت */}
                         <button
                           onClick={() => handleEdit(entry)}
-                          className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/35 border border-blue-400/25 rounded-lg text-blue-300 text-xs font-medium transition-all"
+                          disabled={!isOnline}
+                          className={`px-3 py-1.5 border rounded-lg text-xs font-medium transition-all ${
+                            isOnline
+                              ? "bg-blue-500/20 hover:bg-blue-500/35 border-blue-400/25 text-blue-300"
+                              : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+                          }`}
                         >
                           Edit
                         </button>
                       </div>
                     </div>
-                    {/* Progress bar */}
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}

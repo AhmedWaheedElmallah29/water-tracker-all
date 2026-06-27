@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaWifi } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useApi } from "../../hooks/useApi";
 import { useOfflineWater } from "../../hooks/useOfflineWater";
@@ -45,7 +44,6 @@ const BOTTLE_SIZES = [
   },
 ];
 
-/** Calculate consecutive-day hydration streak from history data */
 function calculateStreak(history) {
   if (!history || history.length === 0) return 0;
   const sorted = [...history]
@@ -91,15 +89,18 @@ export default function Dashboard() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [newGoal, setNewGoal] = useState("");
 
-  // تتبع حالة الشبكة لحماية Clerk ومنع الكراش
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // 1. نظام التكييش (Caching) للداتا
   const fetchHistory = useCallback(async () => {
     try {
       const res = await api.get("/api/water/history");
       setHistory(res.data);
+      localStorage.setItem("cachedHistory", JSON.stringify(res.data));
     } catch (err) {
       console.error("Error fetching history:", err);
+      const cached = localStorage.getItem("cachedHistory");
+      if (cached) setHistory(JSON.parse(cached));
     }
   }, [api]);
 
@@ -107,31 +108,38 @@ export default function Dashboard() {
     try {
       const res = await api.get("/api/water/today");
       setTodayData(res.data);
+      localStorage.setItem("cachedTodayData", JSON.stringify(res.data));
       setIsError(false);
     } catch (err) {
       console.error("Error fetching today:", err);
       setIsError(true);
-      toast.error("فقدنا الاتصال بالسيرفر 📡", { id: "server-error" });
+      // استرجاع الداتا من الذاكرة لو مفيش نت
+      const cached = localStorage.getItem("cachedTodayData");
+      if (cached) {
+        setTodayData(JSON.parse(cached));
+        setIsError(false); // نعتبره مش إيرور عشان نعرض الشاشة
+      } else {
+        toast.error("فقدنا الاتصال بالسيرفر 📡", { id: "server-error" });
+      }
     } finally {
       setLoading(false);
     }
   }, [api]);
 
-  // مراقبة الاتصال بالإنترنت بشكل حي
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      setIsError(false);
-      setLoading(true);
       fetchToday();
       fetchHistory();
     };
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
+    const handleOffline = () => setIsOnline(false);
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+
+    // Initial fetch (أونلاين أو أوفلاين)
+    fetchToday();
+    fetchHistory();
 
     return () => {
       window.removeEventListener("online", handleOnline);
@@ -139,25 +147,15 @@ export default function Dashboard() {
     };
   }, [fetchToday, fetchHistory]);
 
-  const { offlineAddWater } = useOfflineWater((data) => {
+  // 2. استخدام هوك الأوفلاين وجلب الـ pendingCount للشريط
+  const { offlineAddWater, pendingCount } = useOfflineWater((data) => {
     setTodayData(data);
+    localStorage.setItem("cachedTodayData", JSON.stringify(data)); // تحديث الكاش بعد الإضافة
     fetchHistory();
   }, fetchHistory);
 
-  useEffect(() => {
-    if (isOnline) {
-      fetchToday();
-      fetchHistory();
-    } else {
-      setLoading(false);
-    }
-  }, [isOnline, fetchToday, fetchHistory]);
-
+  // 3. دالة الإضافة بتمرر الحدث للأوفلاين هوك مباشرة بدون بلوك
   const addWater = (amount) => {
-    if (!isOnline) {
-      toast.error("You are offline. Cannot add logs right now.");
-      return;
-    }
     offlineAddWater(amount);
   };
 
@@ -168,6 +166,10 @@ export default function Dashboard() {
   };
 
   const handleRemoveAmount = async () => {
+    if (!isOnline) {
+      toast.error("Removing entries requires an internet connection.");
+      return;
+    }
     if (!removeAmount || removeAmount <= 0) return;
     try {
       const res = await api.delete("/api/water/remove-amount", {
@@ -183,6 +185,10 @@ export default function Dashboard() {
   };
 
   const removeEntry = async (entryId) => {
+    if (!isOnline) {
+      toast.error("Removing entries requires an internet connection.");
+      return;
+    }
     try {
       const res = await api.delete(`/api/water/remove/${entryId}`);
       setTodayData(res.data);
@@ -195,6 +201,10 @@ export default function Dashboard() {
   };
 
   const updateGoal = async () => {
+    if (!isOnline) {
+      toast.error("Updating goals requires an internet connection.");
+      return;
+    }
     if (!newGoal || newGoal <= 0) return;
     try {
       const res = await api.put("/api/water/goal", { goal: parseInt(newGoal) });
@@ -208,6 +218,10 @@ export default function Dashboard() {
   };
 
   const resetDay = async () => {
+    if (!isOnline) {
+      toast.error("Resetting requires an internet connection.");
+      return;
+    }
     try {
       const res = await api.post("/api/water/reset");
       setTodayData(res.data.waterEntry);
@@ -243,26 +257,22 @@ export default function Dashboard() {
     );
   }
 
-  if (!isOnline || (isError && !todayData)) {
+  // 4. الشاشة دي هتظهر بس لو مفيش نت ومفيش داتا متكيشة كمان!
+  if (!isOnline && !todayData && isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-4">
         <div className="text-5xl mb-2 animate-bounce">📡</div>
-        <h2 className="text-xl font-bold text-white">
-          {!isOnline ? "You are Offline" : "Connection Error"}
-        </h2>
+        <h2 className="text-xl font-bold text-white">You are Offline</h2>
         <p className="text-white/50 text-sm max-w-xs">
-          {!isOnline
-            ? "HydroTrack needs an active internet connection to securely sync your hydration records."
-            : "We couldn't connect to the server. Please check your internet connection or try again later."}
+          HydroTrack needs an internet connection to load your profile for the
+          first time.
         </p>
-        {isOnline && (
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition-all"
-          >
-            🔄 Try Again
-          </button>
-        )}
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition-all"
+        >
+          🔄 Try Again
+        </button>
       </div>
     );
   }
@@ -275,6 +285,28 @@ export default function Dashboard() {
       exit="exit"
       className="max-w-7xl mx-auto px-4 py-6 md:px-8"
     >
+      {/* شريط الأوفلاين الذكي */}
+      {!isOnline && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-500/20 border border-amber-500/30 text-amber-100 px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 shadow-lg"
+        >
+          <span className="text-2xl">⚡</span>
+          <div className="flex-1">
+            <p className="font-bold text-sm">You are offline</p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Logs are saved locally and will sync when reconnected.
+              {pendingCount > 0 && (
+                <span className="font-bold ml-1 text-amber-300">
+                  ({pendingCount} pending ⏳)
+                </span>
+              )}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Date Header ─────────────────────────────────────────── */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -295,14 +327,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
         {/* ── LEFT COLUMN ─────────────────────────────────────── */}
         <div className="flex flex-col gap-5">
-          {/* Progress Ring Card - تم إرجاعه div عادي لثبات الـ Blur ومنع الـ Lag */}
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 rounded-3xl" />
             <h2 className="text-white font-semibold text-lg mb-5 text-center">
               Today&apos;s Progress
             </h2>
 
-            {/* Ring */}
             <div className="flex justify-center mb-6">
               <WaterProgressRing
                 percentage={percentage}
@@ -311,7 +341,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Stats Row */}
             <div className="grid grid-cols-3 gap-3">
               {[
                 {
@@ -345,7 +374,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Custom Amount + Remove */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -391,7 +419,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Quick actions row */}
           <div className="flex gap-3">
             <motion.button
               whileTap={{ scale: 0.93 }}
@@ -412,7 +439,6 @@ export default function Dashboard() {
 
         {/* ── RIGHT COLUMN ────────────────────────────────────── */}
         <div className="flex flex-col gap-5">
-          {/* Quick Add Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
@@ -438,7 +464,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Today's Entries */}
           {todayData?.entries && todayData.entries.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -476,7 +501,7 @@ export default function Dashboard() {
                         })}
                       </div>
                     </div>
-                    {entry._id && (
+                    {entry._id && isOnline && (
                       <button
                         onClick={() => setEntryToDelete(entry._id)}
                         className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500/10 text-red-400"
@@ -492,7 +517,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Goal Modal ──────────────────────────────────────────── */}
+      {/* ── Modals ──────────────────────────────────────────── */}
       <AnimatePresence>
         {showGoalModal && (
           <div
@@ -539,7 +564,6 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* ── Reset Modal ──────────────────────────────────────────── */}
       <AnimatePresence>
         {showResetModal && (
           <div
